@@ -1,0 +1,3 @@
+docker run --rm -v $(pwd):/local swaggerapi/swagger-codegen-cli-v3 generate -i local/swagger.yaml -l dynamic-html2 -o local/dist
+docker run --rm -v $(pwd):/local openapitools/openapi-generator-cli generate -i local/swagger.yaml -g html2 -o local/dist
+npx redoc-cli bundle swagger.yaml
