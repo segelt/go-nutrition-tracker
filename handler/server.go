@@ -15,6 +15,7 @@ type Server struct {
 	router *gin.Engine
 
 	MealService resource.MealService
+	AuthService resource.AuthService
 }
 
 func NewServer() *Server {
@@ -24,13 +25,24 @@ func NewServer() *Server {
 	}
 
 	s.router.Use(middleware.ErrorHandler)
-	mealGroup := s.router.Group("/meal")
-	s.registerMealRoutes(mealGroup)
 
 	return s
 }
 
+func (s *Server) registerRoutes() {
+	if s.MealService != nil {
+		mealGroup := s.router.Group("/meal")
+		s.registerMealRoutes(mealGroup)
+	}
+
+	if s.AuthService != nil {
+		authGroup := s.router.Group("/auth")
+		s.registerAuthRoutes(authGroup)
+	}
+}
+
 func (s *Server) Start() error {
+	s.registerRoutes()
 	return s.router.Run("localhost:5820")
 }
 

@@ -28,8 +28,8 @@ func (m *Main) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("cannot open db: %w", err)
 	}
 
-	mealService := mongo.NewMealService(m.DB)
-	m.HTTPServer.MealService = mealService
+	authService := mongo.NewAuthService(m.DB)
+	m.HTTPServer.AuthService = authService
 
 	if err := m.HTTPServer.Start(); err != nil && err != http.ErrServerClosed {
 		fmt.Printf("Server startup failure: %s", err.Error())
