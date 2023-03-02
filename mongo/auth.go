@@ -2,12 +2,12 @@ package mongo
 
 import (
 	"context"
-	"html"
+	"fmt"
+	"nutritiontracker/internal"
 	"nutritiontracker/resource"
-	"strings"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var _ resource.AuthService = (*AuthService)(nil)
@@ -26,7 +26,7 @@ func (s *AuthService) RegisterUser(create resource.UserInput) error {
 		Username: create.Username,
 		Password: create.Password,
 	}
-	err := processUserInfoBeforeRegistration(&newUser)
+	err := newUser.HashPassword(create.Password)
 	if err != nil {
 		return err
 	}
@@ -39,16 +39,29 @@ func (s *AuthService) RegisterUser(create resource.UserInput) error {
 	return err
 }
 
-func processUserInfoBeforeRegistration(u *resource.User) error {
-	//turn password into hash
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+func (s *AuthService) LoginUser(login resource.UserInput) (generatedToken string, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.db.operationTimeout)
+	defer cancel()
+
+	coll := s.db.client.Database("nutrition-tracker").Collection("users")
+	filter := bson.D{{"username", login.Username}}
+
+	var targetUser resource.User
+	err = coll.FindOne(ctx, filter).Decode(&targetUser)
+
 	if err != nil {
-		return err
+		return "", err
 	}
-	u.Password = string(hashedPassword)
 
-	//remove spaces in username
-	u.Username = html.EscapeString(strings.TrimSpace(u.Username))
+	err = targetUser.CheckPassword(login.Password)
+	if err != nil {
+		return "", fmt.Errorf("invalid password")
+	}
 
-	return nil
+	token, err := internal.GenerateToken(targetUser.ID.Hex(), targetUser.Username)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate token for the user after succesful login", err)
+	}
+
+	return token, nil
 }
