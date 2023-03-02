@@ -29,7 +29,7 @@ func GenerateToken(userId string, username string) (generatedToken string, err e
 	return generatedToken, err
 }
 
-func ValidateToken(encodedToken string) error {
+func ValidateToken(encodedToken string) (claims *JWTClaim, err error) {
 	token, err := jwt.ParseWithClaims(
 		encodedToken,
 		&JWTClaim{},
@@ -38,17 +38,17 @@ func ValidateToken(encodedToken string) error {
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	claims, ok := token.Claims.(*JWTClaim)
 	if !ok {
 		err = errors.New("couldn't parse claims")
-		return err
+		return nil, err
 	}
 	if claims.ExpiresAt < time.Now().Local().Unix() {
 		err = errors.New("token expired")
-		return err
+		return nil, err
 	}
-	return nil
+	return claims, err
 
 }

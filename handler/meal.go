@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"nutritiontracker/handler/middleware"
 	"nutritiontracker/resource"
 	e "nutritiontracker/resource/common"
 
@@ -10,11 +11,14 @@ import (
 )
 
 func (s *Server) registerMealRoutes(r *gin.RouterGroup) {
-	r.POST("/", s.Create)
-	r.GET("/single", s.ById)
-	r.GET("/filter", s.ListMeals)
-	r.POST("/update", s.Update)
-	r.DELETE("/", s.DeleteById)
+	r.Use(middleware.WithAuthentication())
+	{
+		r.POST("/", s.Create)
+		r.GET("/single", s.ById)
+		r.GET("/filter", s.ListMeals)
+		r.POST("/update", s.Update)
+		r.DELETE("/", s.DeleteById)
+	}
 }
 
 func (s *Server) Create(c *gin.Context) {
