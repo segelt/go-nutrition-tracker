@@ -42,6 +42,13 @@ func (db *DB) Open() error {
 		return errors.New("NewMongoClient")
 	}
 
+	ctx, cancel = context.WithTimeout(context.Background(), db.connectionTimeout)
+	defer cancel()
+	err = client.Ping(ctx, nil)
+	if err != nil {
+		return errors.New("MongoDB.Ping")
+	}
+
 	db.client = client
 	return nil
 }
