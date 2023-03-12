@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"nutritiontracker/config"
 	"nutritiontracker/handler"
 	"nutritiontracker/mongo"
 	"os"
 	"os/signal"
+
+	"github.com/go-playground/validator"
 )
 
 type Main struct {
@@ -15,12 +18,21 @@ type Main struct {
 	HTTPServer *handler.Server
 }
 
-func New() *Main {
-	db := mongo.NewDB("mongodb://localhost:27017/")
-	return &Main{
-		DB:         db,
-		HTTPServer: handler.NewServer(),
+func New() (*Main, error) {
+	conf, err := config.New()
+	if err != nil {
+		return nil, fmt.Errorf("Config.New :%s", err)
 	}
+
+	validate := validator.New()
+	if err := validate.Struct(conf); err != nil {
+		return nil, fmt.Errorf("Configuration.Validate: Missing required attributes %v", err)
+	}
+
+	return &Main{
+		DB:         mongo.NewDB(conf.DBConf),
+		HTTPServer: handler.NewServer(conf.ServerConf),
+	}, nil
 }
 
 func (m *Main) Run(ctx context.Context) (err error) {
@@ -62,7 +74,11 @@ func main() {
 		cancel()
 	}()
 
-	m := New()
+	m, err := New()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Main.New() %v\n", err)
+		os.Exit(1)
+	}
 
 	if err := m.Run(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, err)

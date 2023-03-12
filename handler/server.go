@@ -2,7 +2,9 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"nutritiontracker/config"
 	"nutritiontracker/handler/middleware"
 	"nutritiontracker/resource"
 	"time"
@@ -16,12 +18,14 @@ type Server struct {
 
 	MealService resource.MealService
 	AuthService resource.AuthService
+	ServerConf  config.ConfServer
 }
 
-func NewServer() *Server {
+func NewServer(serverConf config.ConfServer) *Server {
 	s := &Server{
-		server: &http.Server{},
-		router: gin.Default(),
+		server:     &http.Server{},
+		router:     gin.Default(),
+		ServerConf: serverConf,
 	}
 
 	s.router.Use(middleware.ErrorHandler)
@@ -43,7 +47,7 @@ func (s *Server) registerRoutes() {
 
 func (s *Server) Start() error {
 	s.registerRoutes()
-	return s.router.Run("localhost:5820")
+	return s.router.Run(fmt.Sprintf("localhost:%d", s.ServerConf.Port))
 }
 
 // Close gracefully shuts down the server.

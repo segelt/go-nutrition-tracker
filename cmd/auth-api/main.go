@@ -16,11 +16,12 @@ type Main struct {
 }
 
 func New() *Main {
-	db := mongo.NewDB("mongodb://localhost:27017/")
-	return &Main{
-		DB:         db,
-		HTTPServer: handler.NewServer(),
-	}
+	// db := mongo.NewDB("mongodb://localhost:27017/")
+	// return &Main{
+	// 	DB:         db,
+	// 	HTTPServer: handler.NewServer(),
+	// }
+	return nil
 }
 
 func (m *Main) Run(ctx context.Context) (err error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"nutritiontracker/config"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,11 +18,11 @@ type DB struct {
 	DSN               string
 }
 
-func NewDB(dsn string) *DB {
+func NewDB(conf config.ConfDB) *DB {
 	db := &DB{
-		DSN:               dsn,
-		connectionTimeout: 30 * time.Second,
-		operationTimeout:  10 * time.Second,
+		DSN:               conf.Dsn,
+		connectionTimeout: conf.TimeoutDbconn,
+		operationTimeout:  conf.TimeoutRead,
 	}
 
 	return db
