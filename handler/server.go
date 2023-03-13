@@ -18,10 +18,10 @@ type Server struct {
 
 	MealService resource.MealService
 	AuthService resource.AuthService
-	ServerConf  config.ConfServer
+	ServerConf  config.ServerConfig
 }
 
-func NewServer(serverConf config.ConfServer) *Server {
+func NewServer(serverConf config.ServerConfig) *Server {
 	s := &Server{
 		server:     &http.Server{},
 		router:     gin.Default(),

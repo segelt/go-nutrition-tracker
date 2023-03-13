@@ -19,7 +19,7 @@ type Main struct {
 }
 
 func New() (*Main, error) {
-	conf, err := config.New()
+	conf, err := config.NewMealConfig()
 	if err != nil {
 		return nil, fmt.Errorf("Config.New :%s", err)
 	}
@@ -30,8 +30,8 @@ func New() (*Main, error) {
 	}
 
 	return &Main{
-		DB:         mongo.NewDB(conf.DBConf),
-		HTTPServer: handler.NewServer(conf.ServerConf),
+		DB:         mongo.NewDB(conf.BaseDBConfig),
+		HTTPServer: handler.NewServer(conf.BaseServerConfig),
 	}, nil
 }
 

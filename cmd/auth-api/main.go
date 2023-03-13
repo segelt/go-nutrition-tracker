@@ -4,24 +4,37 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"nutritiontracker/config"
 	"nutritiontracker/handler"
 	"nutritiontracker/mongo"
 	"os"
 	"os/signal"
+
+	"github.com/go-playground/validator"
 )
 
 type Main struct {
 	DB         *mongo.DB
 	HTTPServer *handler.Server
+	Config     *config.AuthConfig
 }
 
-func New() *Main {
-	// db := mongo.NewDB("mongodb://localhost:27017/")
-	// return &Main{
-	// 	DB:         db,
-	// 	HTTPServer: handler.NewServer(),
-	// }
-	return nil
+func New() (*Main, error) {
+	conf, err := config.NewAuthConfig()
+	if err != nil {
+		return nil, fmt.Errorf("Config.New :%s", err)
+	}
+
+	validate := validator.New()
+	if err := validate.Struct(conf); err != nil {
+		return nil, fmt.Errorf("Configuration.Validate: Missing required attributes %v", err)
+	}
+
+	return &Main{
+		DB:         mongo.NewDB(conf.BaseDBConfig),
+		HTTPServer: handler.NewServer(conf.BaseServerConfig),
+		Config:     conf,
+	}, nil
 }
 
 func (m *Main) Run(ctx context.Context) (err error) {
@@ -29,7 +42,7 @@ func (m *Main) Run(ctx context.Context) (err error) {
 		return fmt.Errorf("cannot open db: %w", err)
 	}
 
-	authService := mongo.NewAuthService(m.DB)
+	authService := mongo.NewAuthService(m.DB, m.Config.BaseServerConfig.JWT_SECRET)
 	m.HTTPServer.AuthService = authService
 
 	if err := m.HTTPServer.Start(); err != nil && err != http.ErrServerClosed {
@@ -63,7 +76,11 @@ func main() {
 		cancel()
 	}()
 
-	m := New()
+	m, err := New()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Main.New() %v\n", err)
+		os.Exit(1)
+	}
 
 	if err := m.Run(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, err)

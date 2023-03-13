@@ -11,7 +11,9 @@ import (
 )
 
 func (s *Server) registerMealRoutes(r *gin.RouterGroup) {
-	r.Use(middleware.WithAuthentication())
+	/*P#1*/
+	authMiddleware := middleware.NewAuthMiddleware(s.ServerConf.JWT_SECRET)
+	r.Use(authMiddleware.WithAuthentication(s.ServerConf.JWT_SECRET))
 	{
 		r.POST("/", s.Create)
 		r.GET("/single", s.ById)

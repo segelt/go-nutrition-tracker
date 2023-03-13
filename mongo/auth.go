@@ -13,11 +13,15 @@ import (
 var _ resource.AuthService = (*AuthService)(nil)
 
 type AuthService struct {
-	db *DB
+	db         *DB
+	jwtManager *internal.JwtManager
 }
 
-func NewAuthService(db *DB) *AuthService {
-	return &AuthService{db: db}
+func NewAuthService(db *DB, jwtSecret string) *AuthService {
+	return &AuthService{
+		db:         db,
+		jwtManager: internal.New(jwtSecret),
+	}
 }
 
 func (s *AuthService) RegisterUser(create resource.UserInput) error {
@@ -58,7 +62,7 @@ func (s *AuthService) LoginUser(login resource.UserInput) (generatedToken string
 		return "", fmt.Errorf("invalid password")
 	}
 
-	token, err := internal.GenerateToken(targetUser.ID.Hex(), targetUser.Username)
+	token, err := s.jwtManager.GenerateToken(targetUser.ID.Hex(), targetUser.Username)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate token for the user after succesful login", err)
 	}

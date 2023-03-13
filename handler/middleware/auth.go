@@ -6,7 +6,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func WithAuthentication() gin.HandlerFunc {
+type AuthMiddleware struct {
+	JWT_MANAGER *internal.JwtManager
+}
+
+func NewAuthMiddleware(jwt_secret string) *AuthMiddleware {
+	return &AuthMiddleware{
+		JWT_MANAGER: internal.New(jwt_secret),
+	}
+}
+
+func (a *AuthMiddleware) WithAuthentication(jwt_secret string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		const BEARER_SCHEMA = "Bearer "
 		authHeader := context.GetHeader("Authorization")
@@ -23,7 +33,7 @@ func WithAuthentication() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := internal.ValidateToken(tokenString)
+		claims, err := a.JWT_MANAGER.ValidateToken(tokenString)
 		if err != nil {
 			context.JSON(401, gin.H{"error": err.Error()})
 			context.Abort()

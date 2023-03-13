@@ -7,14 +7,22 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtKey = []byte("ToBeConfiguredFromEnv")
+type JwtManager struct {
+	jwt_secret []byte
+}
+
+func New(JWT_SECRET string) *JwtManager {
+	return &JwtManager{
+		jwt_secret: []byte(JWT_SECRET),
+	}
+}
 
 type JWTClaim struct {
 	UserName string `json:"username"`
 	jwt.StandardClaims
 }
 
-func GenerateToken(userId string, username string) (generatedToken string, err error) {
+func (m JwtManager) GenerateToken(userId string, username string) (generatedToken string, err error) {
 	expirationTime := time.Now().Add(time.Hour * 48)
 	claims := &JWTClaim{
 		UserName: username,
@@ -25,16 +33,17 @@ func GenerateToken(userId string, username string) (generatedToken string, err e
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	generatedToken, err = token.SignedString(jwtKey)
+	generatedToken, err = token.SignedString(m.jwt_secret)
 	return generatedToken, err
 }
 
-func ValidateToken(encodedToken string) (claims *JWTClaim, err error) {
+func (m JwtManager) ValidateToken(encodedToken string) (claims *JWTClaim, err error) {
 	token, err := jwt.ParseWithClaims(
 		encodedToken,
 		&JWTClaim{},
 		func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtKey), nil
+			// return []byte(jwtKey), nil
+			return m.jwt_secret, nil
 		},
 	)
 	if err != nil {

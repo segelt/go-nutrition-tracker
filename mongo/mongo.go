@@ -18,7 +18,7 @@ type DB struct {
 	DSN               string
 }
 
-func NewDB(conf config.ConfDB) *DB {
+func NewDB(conf config.DBConfig) *DB {
 	db := &DB{
 		DSN:               conf.Dsn,
 		connectionTimeout: conf.TimeoutDbconn,
