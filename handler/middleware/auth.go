@@ -16,7 +16,7 @@ func NewAuthMiddleware(jwt_secret string) *AuthMiddleware {
 	}
 }
 
-func (a *AuthMiddleware) WithAuthentication(jwt_secret string) gin.HandlerFunc {
+func (a *AuthMiddleware) WithAuthentication() gin.HandlerFunc {
 	return func(context *gin.Context) {
 		const BEARER_SCHEMA = "Bearer "
 		authHeader := context.GetHeader("Authorization")

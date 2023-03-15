@@ -1,19 +1,24 @@
-package config
+package meal
 
 import (
 	"fmt"
+	"nutritiontracker/configs"
 
 	"github.com/go-playground/validator"
 	"github.com/spf13/viper"
 )
 
-type AuthConfig struct {
-	BaseDBConfig     DBConfig
-	BaseServerConfig ServerConfig
+type MealDBConfig struct{}
+
+type MealServerConfig struct{}
+
+type MealConfig struct {
+	BaseDBConfig     configs.DBConfig
+	BaseServerConfig configs.ServerConfig
 }
 
-func NewAuthConfig() (*AuthConfig, error) {
-	var c AuthConfig
+func NewMealConfig() (*MealConfig, error) {
+	var c MealConfig
 
 	viper.AddConfigPath("../../")
 	viper.SetConfigName("app")
@@ -21,17 +26,17 @@ func NewAuthConfig() (*AuthConfig, error) {
 	viper.AutomaticEnv()
 	viper.ReadInConfig()
 
-	var dbConf DBConfig
+	var dbConf configs.DBConfig
 	if err := viper.Unmarshal(&dbConf); err != nil {
 		return nil, fmt.Errorf("NewConfiguration.UnmarshalDB %s", err)
 	}
 
-	var serverConf ServerConfig
+	var serverConf configs.ServerConfig
 	if err := viper.Unmarshal(&serverConf); err != nil {
 		return nil, fmt.Errorf("NewConfiguration.UnmarshalServer %s", err)
 	}
 
-	c = AuthConfig{
+	c = MealConfig{
 		BaseDBConfig:     dbConf,
 		BaseServerConfig: serverConf,
 	}

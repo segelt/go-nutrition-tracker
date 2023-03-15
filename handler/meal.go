@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"nutritiontracker/configs"
 	"nutritiontracker/handler/middleware"
 	"nutritiontracker/resource"
 	e "nutritiontracker/resource/common"
@@ -10,10 +11,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) registerMealRoutes(r *gin.RouterGroup) {
-	/*P#1*/
-	authMiddleware := middleware.NewAuthMiddleware(s.ServerConf.JWT_SECRET)
-	r.Use(authMiddleware.WithAuthentication(s.ServerConf.JWT_SECRET))
+type MealServer struct {
+	BaseServer  *BaseServer
+	MealService resource.MealService
+}
+
+func NewMealServer(serverConf configs.ServerConfig) *MealServer {
+	baseServer := &BaseServer{
+		server:     &http.Server{},
+		router:     gin.Default(),
+		ServerConf: serverConf,
+	}
+	s := &MealServer{
+		BaseServer: baseServer,
+	}
+
+	baseServer.router.Use(middleware.ErrorHandler)
+
+	return s
+}
+
+func (s *MealServer) Start() error {
+	s.registerRoutes()
+	return s.BaseServer.Start()
+}
+
+func (s *MealServer) Close() error {
+	return s.BaseServer.Close()
+}
+
+func (s *MealServer) registerRoutes() {
+	r := s.BaseServer.router.Group("/meal")
+	authMiddleware := middleware.NewAuthMiddleware(s.BaseServer.ServerConf.JWT_SECRET)
+
+	r.Use(authMiddleware.WithAuthentication())
 	{
 		r.POST("/", s.Create)
 		r.GET("/single", s.ById)
@@ -23,7 +54,7 @@ func (s *Server) registerMealRoutes(r *gin.RouterGroup) {
 	}
 }
 
-func (s *Server) Create(c *gin.Context) {
+func (s *MealServer) Create(c *gin.Context) {
 	var req resource.MealCreate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(e.AppError{
@@ -45,7 +76,7 @@ func (s *Server) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, "")
 }
 
-func (s *Server) ById(c *gin.Context) {
+func (s *MealServer) ById(c *gin.Context) {
 	targetId, ok := c.GetQuery("id")
 	if !ok {
 		c.Error(e.AppError{
@@ -67,7 +98,7 @@ func (s *Server) ById(c *gin.Context) {
 	c.JSON(http.StatusOK, targetMeal)
 }
 
-func (s *Server) ListMeals(c *gin.Context) {
+func (s *MealServer) ListMeals(c *gin.Context) {
 	var req resource.MealFilter
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(e.AppError{
@@ -89,7 +120,7 @@ func (s *Server) ListMeals(c *gin.Context) {
 	c.JSON(http.StatusOK, meals)
 }
 
-func (s *Server) Update(c *gin.Context) {
+func (s *MealServer) Update(c *gin.Context) {
 	var req resource.MealUpdate
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(e.AppError{
@@ -111,7 +142,7 @@ func (s *Server) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, "")
 }
 
-func (s *Server) DeleteById(c *gin.Context) {
+func (s *MealServer) DeleteById(c *gin.Context) {
 	targetId, ok := c.GetQuery("id")
 	if !ok {
 		c.Error(e.AppError{

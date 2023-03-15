@@ -3,18 +3,50 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"nutritiontracker/configs"
+	"nutritiontracker/handler/middleware"
 	"nutritiontracker/resource"
 	e "nutritiontracker/resource/common"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) registerAuthRoutes(r *gin.RouterGroup) {
+type AuthServer struct {
+	BaseServer  *BaseServer
+	AuthService resource.AuthService
+}
+
+func NewAuthServer(serverConf configs.ServerConfig) *AuthServer {
+	baseServer := &BaseServer{
+		server:     &http.Server{},
+		router:     gin.Default(),
+		ServerConf: serverConf,
+	}
+	s := &AuthServer{
+		BaseServer: baseServer,
+	}
+
+	baseServer.router.Use(middleware.ErrorHandler)
+
+	return s
+}
+
+func (s *AuthServer) Start() error {
+	s.registerRoutes()
+	return s.BaseServer.Start()
+}
+
+func (s *AuthServer) Close() error {
+	return s.BaseServer.Close()
+}
+
+func (s *AuthServer) registerRoutes() {
+	r := s.BaseServer.router.Group("/auth")
 	r.POST("/", s.Register)
 	r.POST("/login", s.Login)
 }
 
-func (s *Server) Register(c *gin.Context) {
+func (s *AuthServer) Register(c *gin.Context) {
 	var req resource.UserInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(e.AppError{
@@ -36,7 +68,7 @@ func (s *Server) Register(c *gin.Context) {
 	c.Status(http.StatusCreated)
 }
 
-func (s *Server) Login(c *gin.Context) {
+func (s *AuthServer) Login(c *gin.Context) {
 	var req resource.UserInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.Error(e.AppError{

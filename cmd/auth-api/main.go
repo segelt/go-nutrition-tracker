@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"nutritiontracker/config"
+	"nutritiontracker/configs/auth"
 	"nutritiontracker/handler"
 	"nutritiontracker/mongo"
 	"os"
@@ -15,12 +15,12 @@ import (
 
 type Main struct {
 	DB         *mongo.DB
-	HTTPServer *handler.Server
-	Config     *config.AuthConfig
+	HTTPServer *handler.AuthServer
+	Config     *auth.AuthConfig
 }
 
 func New() (*Main, error) {
-	conf, err := config.NewAuthConfig()
+	conf, err := auth.NewAuthConfig()
 	if err != nil {
 		return nil, fmt.Errorf("Config.New :%s", err)
 	}
@@ -32,7 +32,7 @@ func New() (*Main, error) {
 
 	return &Main{
 		DB:         mongo.NewDB(conf.BaseDBConfig),
-		HTTPServer: handler.NewServer(conf.BaseServerConfig),
+		HTTPServer: handler.NewAuthServer(conf.BaseServerConfig),
 		Config:     conf,
 	}, nil
 }
